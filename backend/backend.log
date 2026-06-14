@@ -1,0 +1,28 @@
+Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+Traceback (most recent call last):
+  File "/home/user/samtsai/backend/main.py", line 8, in <module>
+    from app.api.routes import router
+  File "/home/user/samtsai/backend/app/api/routes.py", line 143, in <module>
+    @router.post("/blood-pressure/with-photo")
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/samtsai/backend/venv/lib/python3.11/site-packages/fastapi/routing.py", line 921, in decorator
+    self.add_api_route(
+  File "/home/user/samtsai/backend/venv/lib/python3.11/site-packages/fastapi/routing.py", line 860, in add_api_route
+    route = route_class(
+            ^^^^^^^^^^^^
+  File "/home/user/samtsai/backend/venv/lib/python3.11/site-packages/fastapi/routing.py", line 496, in __init__
+    self.body_field = get_body_field(dependant=self.dependant, name=self.unique_id)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/samtsai/backend/venv/lib/python3.11/site-packages/fastapi/dependencies/utils.py", line 809, in get_body_field
+    check_file_field(final_field)
+  File "/home/user/samtsai/backend/venv/lib/python3.11/site-packages/fastapi/dependencies/utils.py", line 101, in check_file_field
+    raise RuntimeError(multipart_not_installed_error) from None
+RuntimeError: Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
