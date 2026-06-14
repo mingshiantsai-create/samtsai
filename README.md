@@ -28,12 +28,29 @@
 
 ## 快速開始
 
-### 前置要求
+### 🐳 方式 1：Docker（推薦）
+
+**前置要求：**
+- Docker
+- Docker Compose
+
+**一行命令啟動：**
+```bash
+docker-compose up -d
+```
+
+✅ 應用已啟動！訪問：http://localhost
+
+詳見 [Docker 部署指南](DOCKER_GUIDE.md)
+
+### 💻 方式 2：本地開發
+
+**前置要求**
 - Python 3.9+
 - Node.js 16+
 - 瀏覽器相機權限（用於拍攝血壓表）
 
-### 後端設置
+**後端設置**
 
 ```bash
 cd backend
@@ -45,7 +62,7 @@ python main.py
 
 後端將在 `http://localhost:8000` 啟動
 
-### 前端設置
+**前端設置**
 
 ```bash
 cd frontend

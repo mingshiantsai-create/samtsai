@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Docker 環境下自動使用相對 URL，本地開發使用顯式配置
+const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? "http://localhost:8000"
+    : "");
 
 interface StockData {
   symbol: string;
