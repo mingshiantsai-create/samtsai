@@ -15,6 +15,14 @@ interface ChipData {
   margin_change?: number;
 }
 
+interface BloodPressureCreateRequest {
+  systolic: number;
+  diastolic: number;
+  pulse?: number;
+  measurement_time: string;
+  notes?: string;
+}
+
 class ChipAnalysisClient {
   private baseUrl: string;
 
@@ -59,6 +67,31 @@ class ChipAnalysisClient {
     }>(`/api/stocks/${symbol}/chip?days=${days}`);
     return data.data;
   }
+
+  async createBloodPressure(data: BloodPressureCreateRequest): Promise<Response> {
+    return fetch(`${this.baseUrl}/api/blood-pressure`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getBloodPressureRecords(limit: number = 50, offset: number = 0): Promise<any> {
+    return this.fetch(`/api/blood-pressure?limit=${limit}&offset=${offset}`);
+  }
+
+  async getBloodPressureRecord(id: number): Promise<any> {
+    return this.fetch(`/api/blood-pressure/${id}`);
+  }
+
+  async deleteBloodPressureRecord(id: number): Promise<any> {
+    return this.fetch(`/api/blood-pressure/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
-export const chipClient = new ChipAnalysisClient();
+export const api = new ChipAnalysisClient();
+export const chipClient = api;

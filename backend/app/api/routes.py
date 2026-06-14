@@ -1,8 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
 from app.database import get_db
 from app.services.chip_service import ChipService
-from app.models.stock import Stock
+from app.models.stock import Stock, BloodPressureRecord
+
+class BloodPressureCreate(BaseModel):
+    systolic: int
+    diastolic: int
+    pulse: Optional[int] = None
+    measurement_time: datetime
+    notes: Optional[str] = None
+
+class BloodPressureResponse(BaseModel):
+    id: int
+    systolic: int
+    diastolic: int
+    pulse: Optional[int]
+    measurement_time: datetime
+    notes: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 router = APIRouter(prefix="/api", tags=["chip"])
 
@@ -93,3 +116,179 @@ def update_daily_data(symbol: str, db: Session = Depends(get_db)):
 def health_check():
     """健康檢查"""
     return {"status": "ok"}
+
+# Blood Pressure APIs
+@router.post("/blood-pressure", response_model=BloodPressureResponse)
+def create_blood_pressure_record(
+    record: BloodPressureCreate,
+    db: Session = Depends(get_db)
+):
+    """建立血壓記錄"""
+    try:
+        bp_record = BloodPressureRecord(
+            systolic=record.systolic,
+            diastolic=record.diastolic,
+            pulse=record.pulse,
+            measurement_time=record.measurement_time,
+            notes=record.notes
+        )
+        db.add(bp_record)
+        db.commit()
+        db.refresh(bp_record)
+        return bp_record
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/blood-pressure/with-photo")
+async def create_blood_pressure_with_photo(
+    systolic: int,
+    diastolic: int,
+    pulse: Optional[int] = None,
+    measurement_time: Optional[str] = None,
+    notes: Optional[str] = None,
+    photo: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    """建立血壓記錄（含照片上傳）"""
+    try:
+        photo_data = None
+        if photo:
+            photo_data = await photo.read()
+
+        measurement_dt = datetime.fromisoformat(measurement_time) if measurement_time else datetime.utcnow()
+
+        bp_record = BloodPressureRecord(
+            systolic=systolic,
+            diastolic=diastolic,
+            pulse=pulse,
+            measurement_time=measurement_dt,
+            photo_data=photo_data,
+            notes=notes
+        )
+        db.add(bp_record)
+        db.commit()
+        db.refresh(bp_record)
+
+        return {
+            "id": bp_record.id,
+            "systolic": bp_record.systolic,
+            "diastolic": bp_record.diastolic,
+            "pulse": bp_record.pulse,
+            "measurement_time": bp_record.measurement_time,
+            "notes": bp_record.notes,
+            "created_at": bp_record.created_at
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/blood-pressure")
+def list_blood_pressure_records(
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db)
+):
+    """取得血壓記錄列表"""
+    try:
+        records = db.query(BloodPressureRecord).order_by(
+            BloodPressureRecord.measurement_time.desc()
+        ).limit(limit).offset(offset).all()
+
+        total = db.query(BloodPressureRecord).count()
+
+        return {
+            "data": [
+                {
+                    "id": r.id,
+                    "systolic": r.systolic,
+                    "diastolic": r.diastolic,
+                    "pulse": r.pulse,
+                    "measurement_time": r.measurement_time,
+                    "notes": r.notes,
+                    "created_at": r.created_at
+                }
+                for r in records
+            ],
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/blood-pressure/{record_id}")
+def get_blood_pressure_record(
+    record_id: int,
+    db: Session = Depends(get_db)
+):
+    """取得單筆血壓記錄"""
+    try:
+        record = db.query(BloodPressureRecord).filter(
+            BloodPressureRecord.id == record_id
+        ).first()
+
+        if not record:
+            raise HTTPException(status_code=404, detail="Record not found")
+
+        return {
+            "id": record.id,
+            "systolic": record.systolic,
+            "diastolic": record.diastolic,
+            "pulse": record.pulse,
+            "measurement_time": record.measurement_time,
+            "notes": record.notes,
+            "created_at": record.created_at,
+            "has_photo": record.photo_data is not None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/blood-pressure/{record_id}/photo")
+def get_blood_pressure_photo(
+    record_id: int,
+    db: Session = Depends(get_db)
+):
+    """取得血壓表照片"""
+    try:
+        record = db.query(BloodPressureRecord).filter(
+            BloodPressureRecord.id == record_id
+        ).first()
+
+        if not record or not record.photo_data:
+            raise HTTPException(status_code=404, detail="Photo not found")
+
+        return FileResponse(
+            content=record.photo_data,
+            media_type="image/jpeg"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/blood-pressure/{record_id}")
+def delete_blood_pressure_record(
+    record_id: int,
+    db: Session = Depends(get_db)
+):
+    """刪除血壓記錄"""
+    try:
+        record = db.query(BloodPressureRecord).filter(
+            BloodPressureRecord.id == record_id
+        ).first()
+
+        if not record:
+            raise HTTPException(status_code=404, detail="Record not found")
+
+        db.delete(record)
+        db.commit()
+
+        return {"message": "Record deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))

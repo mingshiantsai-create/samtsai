@@ -1,8 +1,21 @@
-from sqlalchemy import Column, String, Float, Integer, DateTime, Date, Text
+from sqlalchemy import Column, String, Float, Integer, DateTime, Date, Text, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
 Base = declarative_base()
+
+class BloodPressureRecord(Base):
+    __tablename__ = "blood_pressure_records"
+
+    id = Column(Integer, primary_key=True)
+    systolic = Column(Integer, nullable=False)  # 收縮壓
+    diastolic = Column(Integer, nullable=False)  # 舒張壓
+    pulse = Column(Integer)  # 心率（可選）
+    measurement_time = Column(DateTime, nullable=False)  # 測量時間
+    photo_data = Column(LargeBinary)  # 血壓表照片（可選）
+    notes = Column(Text)  # 備註
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Stock(Base):
     __tablename__ = "stocks"
