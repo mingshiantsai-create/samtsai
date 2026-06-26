@@ -1,0 +1,30 @@
+name: SEC Insider Buy Tracker
+
+on:
+  schedule:
+    # 00:05 UTC Mon–Fri = 08:05 台北时间 (UTC+8) 周一至周五
+    - cron: '5 0 * * 1-5'
+  workflow_dispatch:   # 允许手动触发（用于测试）
+
+jobs:
+  track-insiders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests urllib3
+
+      - name: Run SEC insider buy tracker
+        env:
+          GMAIL_USER: mingshian.tsai@gmail.com
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python sec-insider-tracker/tracker.py
