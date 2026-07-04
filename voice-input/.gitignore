@@ -1,0 +1,15 @@
+# XcodeGen 生成物
+*.xcodeproj
+# 生成的 Info.plist / entitlements（由 project.yml 生成）
+iOS/App/Info.plist
+iOS/App/VoiceInput.entitlements
+iOS/Keyboard/Info.plist
+iOS/Keyboard/VoiceKeyboard.entitlements
+macOS/Info.plist
+
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store

@@ -1,0 +1,97 @@
+name: VoiceInput
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "16.0"
+    macOS: "13.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  # ── iPhone / iPad 主 App（负责录音 + 语音识别）─────────────────
+  VoiceInput-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: iOS/App
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.voiceinput
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: iOS/App/Info.plist
+      properties:
+        CFBundleDisplayName: 语音输入
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSMicrophoneUsageDescription: 语音输入需要使用麦克风把您的语音转换为文字
+        NSSpeechRecognitionUsageDescription: 需要语音识别权限将您的语音转换为文字
+        CFBundleURLTypes:
+          - CFBundleURLName: voiceinput
+            CFBundleURLSchemes:
+              - voiceinput
+    entitlements:
+      path: iOS/App/VoiceInput.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.voiceinput
+    dependencies:
+      - target: VoiceKeyboard
+        embed: true
+
+  # ── 自定义键盘扩展（在任何 App 里插入识别结果）────────────────
+  VoiceKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: iOS/Keyboard
+      - path: Shared/SharedStore.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.voiceinput.keyboard
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: iOS/Keyboard/Info.plist
+      properties:
+        CFBundleDisplayName: 语音输入法
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+          NSExtensionAttributes:
+            IsASCIICapable: false
+            PrefersRightToLeft: false
+            PrimaryLanguage: zh-Hans
+            RequestsOpenAccess: true
+    entitlements:
+      path: iOS/Keyboard/VoiceKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.voiceinput
+
+  # ── Mac 菜单栏语音输入（全局快捷键，把文字打进任何应用）───────
+  VoiceInput-Mac:
+    type: application
+    platform: macOS
+    sources:
+      - path: macOS
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.voiceinput.mac
+    info:
+      path: macOS/Info.plist
+      properties:
+        CFBundleDisplayName: 语音输入
+        LSUIElement: true
+        NSMicrophoneUsageDescription: 语音输入需要使用麦克风把您的语音转换为文字
+        NSSpeechRecognitionUsageDescription: 需要语音识别权限将您的语音转换为文字
